@@ -39,6 +39,17 @@ PIPEHOST   := altbioinfo.unil.ch
 DATAHOST   := bigbgee.unil.ch
 DATAPATH   := /opt/gtexfile/PIPELINE_RESULTS_STORAGE
 
+# Machine used for the FTP
+# FTPUSER and FTPPASS defined in Makefile.Config
+FTPHOST       := ftpbgee.unil.ch
+FTPHOMEPATH   := /u01/ftp/
+FTPDATA := $(FTPHOMEPATH)$(DBNAME)/
+FTPDOWNLOAD := $(FTPDATA)download/
+FTPCALLSPACKAGE := $(FTPDOWNLOAD)calls_package/
+FTPFASTAINTERGENIC := $(FTPCALLSPACKAGE)fasta_intergenic/
+FTPREFINTERGENIC := $(FTPCALLSPACKAGE)reference_intergenic/
+
+
 # Ensembl
 ENSRELEASE             := 84
 ENSMETAZOARELEASE      := 30

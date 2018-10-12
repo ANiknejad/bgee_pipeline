@@ -30,3 +30,7 @@ ENSDBPASS  := pass
 # MGI
 MGIDBUSER := login
 MGIDBPASS := pass
+
+# FTP
+FTPUSER := login
+FTPPASS := pass

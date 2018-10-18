@@ -25,5 +25,8 @@ make
 
 ## Other notable Makefile targets
 
-* `make create_fasta_intergenic` will only create one intergenic fasta file per species from the transcriptome fasta files created during the RNA-Seq part of the pipeline. Then it will copy these files to the FTP
+* `make create_fasta_intergenic` will only create one intergenic fasta file per species from the transcriptome fasta files created during the RNA-Seq part of the pipeline.
 
+* `make create_reference_intergenic` will only create one txt file per species containing all reference intergenic regions.
+
+* `make create_fasta_intergenic` will only copy both reference and fasta files to the FTP.

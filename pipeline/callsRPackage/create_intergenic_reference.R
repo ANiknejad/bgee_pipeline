@@ -67,7 +67,7 @@ for (species in gaussian$speciesId) {
   cat(paste0("max intergenic for species ", species, " is : ", max_intergenic))
 
   selected_intergenic <- as.data.frame(sum_by_species$gene_id[sum_by_species$type == "intergenic"
-      & sum_by_species$tpm < max_intergenic])
+      & sum_by_species$tpm <= max_intergenic])
   write.table(selected_intergenic, file=file.path(output_dir,gsub("SPECIES_ID", species, reference_intergenic_file_pattern)), quote=FALSE, sep='\t', col.names = FALSE, row.names = FALSE)
                               
       

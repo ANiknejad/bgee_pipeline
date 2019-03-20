@@ -4,7 +4,7 @@
 use strict;
 use warnings;
 use diagnostics;
-
+use Data::Dumper;
 use File::Path qw(make_path);
 use Getopt::Long;
 use Bio::SeqIO;
@@ -26,19 +26,19 @@ use Data::Dumper;
 
 
 # Define arguments & their default value
-my ($bgee_connector, $ens_release, $transcriptomes_folder, $transcriptome_suffix, $transcriptome_archive_ext, $intergenic_pattern) = ('', '', '', '', '');
+my ($bgee_connector, $ens_release, $transcriptomes_folder, $transcriptome_suffix, $transcriptome_archive_ext, $ref_intergenic_dir) = ('', '', '', '', '');
 my %opts = ('bgee=s'       						=> \$bgee_connector,     # Bgee connector string
 			'ens_release=s'      				=> \$ens_release,
             'transcriptomes_folder=s'  			=> \$transcriptomes_folder, 
             'transcriptome_suffix=s'  			=> \$transcriptome_suffix, 
             'transcriptome_archive_ext=s'  		=> \$transcriptome_archive_ext, 
-            'intergenic_pattern=s'   			=> \$intergenic_pattern, #regex matching all transcript IDs corresponding to intergenic regions in transcriptome fasta file
+            'ref_intergenic_dir=s'   			=> \$ref_intergenic_dir, 
            );
 
 
 # Check arguments
 my $test_options = Getopt::Long::GetOptions(%opts);
-if ( !$test_options || $bgee_connector eq '' || $ens_release eq '' || $transcriptomes_folder eq '' || $transcriptome_suffix eq '' || $transcriptome_archive_ext eq '' || $intergenic_pattern eq '') {
+if ( !$test_options || $bgee_connector eq '' || $ens_release eq '' || $transcriptomes_folder eq '' || $transcriptome_suffix eq '' || $transcriptome_archive_ext eq '' || $ref_intergenic_dir eq '') {
     print "\n\tInvalid or missing argument:
 \te.g. $0 -ens_release=... -transcriptomes_folder=\$(OUTPUT_DIR) -transcriptome_suffix=\$(TRANSCRIPTOME_FILE_SUFFIX)  -transcriptome_archive_ext=\$(TRANSCRIPTOME_FILE_EXT) -intergenic_pattern=\$(INTERGENIC_PATTERN)
 \t-bgee      						Bgee connector string
@@ -46,7 +46,7 @@ if ( !$test_options || $bgee_connector eq '' || $ens_release eq '' || $transcrip
 \t-transcriptomes_folder=s     		Folder where transcriptome fasta files are stored.
 \t-transcriptome_suffix=s       	End of the name common for all transcriptome fasta files (e.g transcriptome).
 \t-transcriptome_archive_ext=s   	Extension of compressed transcriptome files. (e.g .xz)
-\t-intergenic_pattern=s  			Regex matching all transcript IDs corresponding to intergenic regions in transcriptome fasta files.
+\t-ref_intergenic_dir=s  			Path to the directory that contains files with reference intergenic ids for each species.
 \n";
     exit 1;
 }
@@ -68,7 +68,6 @@ while(my @row = $bgeeSpecies->fetchrow_array()){
 	$speNameToSpeId {$speciesFileName} = $row[2];
 }
 
-	
 die "Invalid or missing [$transcriptomes_folder]: $?\n"  if ( !-e $transcriptomes_folder || !-d $transcriptomes_folder );
 
 # open directory containing all compressed transcriptome fasta files
@@ -102,15 +101,27 @@ while (my $file = readdir(DIR)) {
 		
 		my $speciesId = $speNameToSpeId{$1};
 		my $intergenic_file = "$transcriptomes_folder$speciesId\_intergenic.fa";
+		
+		my %hash;
+		
+		# Import reference intergenic region IDs
+		my $ref_intergenic_file = $ref_intergenic_dir."intergenic_reference_".$speciesId.".tsv";
+		my @ref_intergenic_ids;
+		open my $lines, $ref_intergenic_file or die $!;
+		while( my $line = <$lines>)  {   
+    		chomp($line);
+			push @ref_intergenic_ids, $line;
+		}
+		close $lines;
 		print "Start creation of : $intergenic_file\n";
 		my $seq_in  = Bio::SeqIO->new(-file => "$uncompressed_file", -format => "fasta");
 		my $seq_out = Bio::SeqIO->new(-file => ">$intergenic_file", -format => "fasta");
 		while(my $seq = $seq_in->next_seq) {
 			my $transcript_id = $seq->primary_id;
 			# keep only intergenic regions
- 			if($transcript_id =~ /$intergenic_pattern/) {
-				$seq_out->write_seq($seq);
-  			}
+			if ( grep {$_ eq $transcript_id} @ref_intergenic_ids) {
+					$seq_out->write_seq($seq);
+  			}   			
  		}
   		print "$intergenic_file file has been created successfully\n";
   		# remove uncompressed transcriptomic file
@@ -118,3 +129,4 @@ while (my $file = readdir(DIR)) {
   		
 	}
 }
+closedir DIR;

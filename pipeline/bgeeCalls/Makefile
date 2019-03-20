@@ -1,10 +1,9 @@
 PIPELINEROOT := ../
-DIR_NAME := callsRPackage/
+DIR_NAME := bgeeCalls/
 include $(PIPELINEROOT)Makefile.common
 
 TRANSCRIPTOME_FILE_SUFFIX 		:= transcriptome.fa
 TRANSCRIPTOME_FILE_EXT    		:= .xz
-INTERGENIC_PATTERN		    	:= .*_[0-9]+_[0-9]+$
 REF_INTERGENIC_FOLDER			:= $(OUTPUT_DIR)ref_intergenic/
 REF_INTERGENIC_FILE_NAME		:= intergenic_reference_SPECIES_ID.tsv
 # use $(TMPDIR) because not enough free space on home partition
@@ -16,14 +15,14 @@ RNASEQ_GAUSSIAN_CHOICE 			:= $(GENERATED_FILES_DIR)$(RNASEQPATH)gaussian_choice_
 
 all: copy_intergenic_files
 
-create_fasta_intergenic:
+create_fasta_intergenic: create_reference_intergenic
 	# Copy all transcriptome fasta files
 	@scp $(VITLOGIN)@$(VITHOST):$(RNASEQ_VITALIT_GTF)*$(ENSRELEASE).$(TRANSCRIPTOME_FILE_SUFFIX)$(TRANSCRIPTOME_FILE_EXT) $(FASTA_INTERGENIC_FOLDER) >> $@.tmp 2> $@.warn
 	@scp $(VITLOGIN)@$(VITHOST):$(RNASEQ_VITALIT_GTF)*$(ENSMETAZOARELEASE).$(TRANSCRIPTOME_FILE_SUFFIX)$(TRANSCRIPTOME_FILE_EXT) $(FASTA_INTERGENIC_FOLDER) >> $@.tmp 2> $@.warn
 	
 	# create intergenic fasta files
-	@perl create_intergenic_fasta.pl -bgee=$(BGEECMD) -ens_release=$(ENSRELEASE) -transcriptomes_folder=$(FASTA_INTERGENIC_FOLDER) -transcriptome_suffix=$(TRANSCRIPTOME_FILE_SUFFIX) -transcriptome_archive_ext=$(TRANSCRIPTOME_FILE_EXT) -intergenic_pattern=$(INTERGENIC_PATTERN) >> $@.tmp 2> $@.warn
-	@perl create_intergenic_fasta.pl -bgee=$(BGEECMD) -ens_release=$(ENSMETAZOARELEASE) -transcriptomes_folder=$(FASTA_INTERGENIC_FOLDER) -transcriptome_suffix=$(TRANSCRIPTOME_FILE_SUFFIX) -transcriptome_archive_ext=$(TRANSCRIPTOME_FILE_EXT) -intergenic_pattern=$(INTERGENIC_PATTERN) >> $@.tmp 2> $@.warn
+	@perl create_intergenic_fasta.pl -bgee=$(BGEECMD) -ens_release=$(ENSRELEASE) -transcriptomes_folder=$(FASTA_INTERGENIC_FOLDER) -transcriptome_suffix=$(TRANSCRIPTOME_FILE_SUFFIX) -transcriptome_archive_ext=$(TRANSCRIPTOME_FILE_EXT) -ref_intergenic_dir=$(REF_INTERGENIC_FOLDER) >> $@.tmp 2> $@.warn
+	@perl create_intergenic_fasta.pl -bgee=$(BGEECMD) -ens_release=$(ENSMETAZOARELEASE) -transcriptomes_folder=$(FASTA_INTERGENIC_FOLDER) -transcriptome_suffix=$(TRANSCRIPTOME_FILE_SUFFIX) -transcriptome_archive_ext=$(TRANSCRIPTOME_FILE_EXT) -ref_intergenic_dir=$(REF_INTERGENIC_FOLDER) >> $@.tmp 2> $@.warn
 	
 	# compress intergenic fasta files
 	@find $(FASTA_INTERGENIC_FOLDER) -type f -name '*_intergenic.fa' -exec gzip --verbose --best {} \; >> $@.tmp 2> $@.warn
@@ -51,9 +50,7 @@ copy_intergenic_files: create_fasta_intergenic create_reference_intergenic
 	# copy intergenic fasta files to the ftp
 	@scp $(FASTA_INTERGENIC_FOLDER)*$(ENSRELEASE).intergenic.fa.gz $(FTPUSER)@$(FTPHOST):$(FTPFASTAINTERGENIC)  > $@.tmp 2> $@.warn
 	@scp $(FASTA_INTERGENIC_FOLDER)*$(ENSMETAZOARELEASE).intergenic.fa.gz $(FTPUSER)@$(FTPHOST):$(FTPFASTAINTERGENIC) > $@.tmp 2> $@.warn
-	
-	# copy intergenic fasta files to the ftp
-	@scp $(REF_INTERGENIC_FOLDER)intergenic_reference*.tsv $(FTPUSER)@$(FTPHOST):$(FTPREFINTERGENIC)  > $@.tmp 2> $@.warn
+
 	@$(MV) $@.tmp $@
 	
 

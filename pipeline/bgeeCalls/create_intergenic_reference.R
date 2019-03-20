@@ -1,5 +1,5 @@
 ## Julien Wollbrett 12/10/2018
-## This script allows creation of reference intergenic text files. These files are used in the R package (name?). 
+## This script allows creation of reference intergenic text files. These files are used in the bgeeCalls R package. 
 ## Reference intergenic text files contain identifier of all intergenic regions considered as true intergenic regions
 ## These reference intergenic regions are the result of the expertise of Bgee team 
 ## Basically, this script will for each species:
@@ -52,16 +52,15 @@ for (species in gaussian$speciesId) {
   	exit(paste0("file : ", sum_abundance_file_path, " does not exist."))
   }
   sum_by_species <- read.table(sum_abundance_file_path, h=T, sep="\t", comment.char="")
+  gaussian_number <- gaussian$selectedGaussianIntergenic[gaussian$speciesId == species]
   if (gaussian$selectionSideIntergenic[gaussian$speciesId == species] == "Left"){
     max_intergenic <- max(sum_by_species$tpm[
-        sum_by_species$classification %in%
-        paste0("intergenic_", gaussian$selectedGaussianIntergenic[gaussian$speciesId == species])
+        sum_by_species$classification %in% paste0("intergenic_", gaussian_number)
       ])
   } else if (gaussian$selectionSideIntergenic[gaussian$speciesId == species] == "Right") {
     ## In some case it is tricky to define the gaussians in the conventional way, so it is possible to select all regions that (in summed data) have TPM below threshold defined by selected gaussian, BUT taking min TPM of regions from this gaussian, the gaussian is on the right of the threshold!
     max_intergenic <- min(sum_by_species$tpm[
-        sum_by_species$classification %in%
-        paste0("intergenic_", gaussian$selectedGaussianIntergenic[gaussian$speciesId == species])
+        sum_by_species$classification %in% paste0("intergenic_", gaussian_number)
       ])
   }
   cat(paste0("max intergenic for species ", species, " is : ", max_intergenic))

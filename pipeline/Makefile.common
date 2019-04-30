@@ -45,8 +45,8 @@ FTPHOST       := ftpbgee.unil.ch
 FTPHOMEPATH   := /u01/ftp/
 FTPDATA := $(FTPHOMEPATH)$(DBNAME)/
 FTPDOWNLOAD := $(FTPDATA)download/
-FTPCALLSPACKAGE := $(FTPDOWNLOAD)BgeeCall_package/
-FTPFASTAINTERGENIC := $(FTPCALLSPACKAGE)fasta_intergenic/
+FTPINTERGENIC := $(FTPHOMEPATH)intergenic/
+FTPINTERGENICVERSION := $(FTPINTERGENIC)$(INTERGENICVERSION)/
 
 
 # Ensembl
@@ -91,6 +91,8 @@ MGICMD   := user=$(MGIDBUSER)__pass=$(MGIDBPASS)__host=$(MGIDBHOST)__port=$(MGID
 # BDGP    connection command line argument for Perl scripts
 BDGPCMD  := user=$(DBUSER)__pass=$(DBPASS)__host=$(DBHOST)__port=$(DBPORT)__name=$(BDGPDBNAME)
 
+# BgeeCall R package
+INTERGENICVERSION :=  0.2
 
 # ===================================
 #  COMMANDS

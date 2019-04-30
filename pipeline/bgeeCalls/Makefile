@@ -13,7 +13,22 @@ SUM_ABUNDANCE_FILE_PATTERN		:= sum_abundance_gene_level*.tsv
 RNASEQ_GAUSSIAN_CHOICE 			:= $(GENERATED_FILES_DIR)$(RNASEQPATH)gaussian_choice_by_species.txt
 
 
-all: copy_intergenic_files
+all: before_copying
+
+create_reference_intergenic:
+	# retrieve sum_abundance files
+	@scp $(VITLOGIN)@$(VITHOST):$(RNASEQ_VITALIT_SUM_RES)$(SUM_ABUNDANCE_FILE_PATTERN) $(REF_INTERGENIC_FOLDER) > $@.tmp 2> $@.warn
+	
+	# retrieve gaussian_choice file
+	@cp $(RNASEQ_VITALIT_GAUSSIAN_CHOICE) $(REF_INTERGENIC_FOLDER) > $@.tmp 2> $@.warn
+	
+	# for each sum_abundance file create reference intergenic text file
+	@R CMD BATCH --no-save --no-restore '--args output_dir="$(REF_INTERGENIC_FOLDER)" sum_abundance_file_pattern="$(SUM_ABUNDANCE_FILE_NAME)" sum_abundance_dir="$(REF_INTERGENIC_FOLDER)" gaussian_file_path="$(RNASEQ_GAUSSIAN_CHOICE)" reference_intergenic_file_pattern="$(REF_INTERGENIC_FILE_NAME)"' create_intergenic_reference.R create_intergenic_reference.Rout > $@.tmp 2> $@.warn
+	
+	# delete local version of sum_abundance files
+	@rm -rf $(REF_INTERGENIC_FOLDER)$(SUM_ABUNDANCE_FILE_PATTERN) > $@.tmp 2> $@.warn
+	
+	@$(MV) $@.tmp $@
 
 create_fasta_intergenic: create_reference_intergenic
 	# Copy all transcriptome fasta files
@@ -30,31 +45,29 @@ create_fasta_intergenic: create_reference_intergenic
 	
 	@$(MV) $@.tmp $@
 	
-create_reference_intergenic:
-	# retrieve sum_abundance files
-	@scp $(VITLOGIN)@$(VITHOST):$(RNASEQ_VITALIT_SUM_RES)$(SUM_ABUNDANCE_FILE_PATTERN) $(REF_INTERGENIC_FOLDER) > $@.tmp 2> $@.warn
-	
-	# retrieve gaussian_choice file
-	@cp $(RNASEQ_VITALIT_GAUSSIAN_CHOICE) $(REF_INTERGENIC_FOLDER) > $@.tmp 2> $@.warn
-	
-	# for each sum_abundance file create reference intergenic text file
-	@R CMD BATCH --no-save --no-restore '--args output_dir="$(REF_INTERGENIC_FOLDER)" sum_abundance_file_pattern="$(SUM_ABUNDANCE_FILE_NAME)" sum_abundance_dir="$(REF_INTERGENIC_FOLDER)" gaussian_file_path="$(RNASEQ_GAUSSIAN_CHOICE)" reference_intergenic_file_pattern="$(REF_INTERGENIC_FILE_NAME)"' create_intergenic_reference.R create_intergenic_reference.Rout > $@.tmp 2> $@.warn
-	
-	# delete local version of sum_abundance files
-	@rm -rf $(REF_INTERGENIC_FOLDER)$(SUM_ABUNDANCE_FILE_PATTERN) > $@.tmp 2> $@.warn
-	
-	@$(MV) $@.tmp $@
-	
-# Copy intergenic files (fasta and reference) to ftp server
-copy_intergenic_files: create_fasta_intergenic create_reference_intergenic
-	# copy intergenic fasta files to the ftp
-	@scp $(FASTA_INTERGENIC_FOLDER)*$(ENSRELEASE).intergenic.fa.gz $(FTPUSER)@$(FTPHOST):$(FTPFASTAINTERGENIC)  > $@.tmp 2> $@.warn
-	@scp $(FASTA_INTERGENIC_FOLDER)*$(ENSMETAZOARELEASE).intergenic.fa.gz $(FTPUSER)@$(FTPHOST):$(FTPFASTAINTERGENIC) > $@.tmp 2> $@.warn
+before_copying: create_fasta_intergenic
+	@echo "Before running the next part of the pipeline please be sure you bumped the reference intergenic version (INTERGENICVERSION in the file $(PIPELINEROOT)Makefile.common)."
+	@echo "Otherwise intergenic files present in the ftp will be overwritten."
+	@echo "Then run the command :"
+	@echo "make copy_intergenic_files"
 
+# Copy intergenic files to ftp server
+copy_intergenic_files: 
+	# create directory $(FTPINTERGENICVERSION) on the ftp
+	@ssh $(FTPUSER)@$(FTPHOST) 'mkdir -p $(FTPINTERGENICVERSION)'
+	# copy intergenic for species from ensembl metazoa
+	@scp $(FASTA_INTERGENIC_FOLDER)*$(ENSMETAZOARELEASE).intergenic.fa.gz $(FTPUSER)@$(FTPHOST):$(FTPINTERGENIC) > $@.tmp 2> $@.warn
+	# copy intergenic for species from ensembl
+	@scp $(FASTA_INTERGENIC_FOLDER)*$(ENSRELEASE).intergenic.fa.gz $(FTPUSER)@$(FTPHOST):$(FTPINTERGENIC)  > $@.tmp 2> $@.warn
+	@echo 'Reference intergenic files have been copied to the ftp.'
+	@echo 'In order to allow them to be used by the BgeeCall R package you should add one line to the file $(FTPINTERGENIC)intergenic_release.tsv'
+	@echo 'Please also document how this version of intergenic regions has been created in the file $(FTPINTERGENIC)README'
 	@$(MV) $@.tmp $@
-	
 
 clean:
+	@rm -f create_reference_intergenic
+	@rm -f create_fasta_intergenic
+	@rm -f copy_intergenic_files
 	@rm -rf $(REF_INTERGENIC_FOLDER)
 	@rm -rf $(FASTA_INTERGENIC_FOLDER)
 	@mkdir -p $(REF_INTERGENIC_FOLDER)

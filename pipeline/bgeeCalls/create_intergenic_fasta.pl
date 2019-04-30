@@ -16,10 +16,10 @@ use Data::Dumper;
 
 
 ## Julien Wollbrett 11/10/2018
-## This script allows creation of intergenic only fasta files. These files are used in the R package (name?) allowing user
+## This script allows creation of intergenic only fasta files. These files are used in the BgeeCall R package allowing user
 ## to define present/absent expression calls in his own RNA-Seq libraries.
 ## Basically, this script will :
-##	1. Uncompress files
+##	1. Uncompress transcriptome files (keep compressed files)
 ##	2. Parse transcriptome file and keep only intergenic region
 ##	3. create intergenic fasta file
 ##	4. remove uncompressed transcriptome fasta files
@@ -89,7 +89,7 @@ while (my $file = readdir(DIR)) {
 		if ($transcriptome_archive_ext =~ /\.xz/) {
 			print("Uncompress .xz file : $file_path\n");
 			# uncompress
-				if (system("unxz $file_path") != 0) {
+				if (system("unxz -k $file_path") != 0) {
 				exit "Can not uncompress xz file : $file_path";
 			}
 		} else {

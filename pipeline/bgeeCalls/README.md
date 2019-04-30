@@ -1,12 +1,15 @@
-# Create all data needed to run the RNA-Seq Calls package (called bgeeCalls)
+# Create reference intergenic fasta files needed to generate present/absent calls using the BgeeCall R package
 
 * **Requirements**: having successfully run the step RNA-Seq.
-* **Goal**:         extract data needed by the bgeeCalls R package and made them accessible in the FTP.
+* **Goal**:         generate reference intergenic fasta files for the BgeeCall R package and made them accessible in the FTP.
 
 ## Details
-* This script will create one intergenic fasta file per species from the transcriptome fasta files created during the RNA-Seq part of the pipeline.
-* It will create a text file containing reference intergenic region per species using the RNA-Seq part of the pipeline.
-* It will copy all generated files to the ftp.
+
+The BgeeCall R package allows to generate present/absent calls using the reference intergenic regions generated during the RNA-RSEQ part of the pipeline.
+This script will 
+* Create a text file containing IDs of reference intergenic region per species using the RNA-Seq part of the pipeline.
+* Create one reference intergenic fasta file per species from the transcriptome fasta files created during the RNA-Seq part of the pipeline.
+* Copy all generated files to the ftp.
 
 ## Data generation
 * If it is the first time you execute this step in this pipeline run:
@@ -15,7 +18,7 @@ make clean
 ```
 * Run Makefile:
 ```
-make
+make 
 ```
 
 ## Data verification
@@ -24,8 +27,7 @@ make
 
 ## Other notable Makefile targets
 
-* `make create_fasta_intergenic` will only create one intergenic fasta file per species from the transcriptome fasta files created during the RNA-Seq part of the pipeline.
+* `make create_fasta_intergenic` creates one intergenic fasta file per species from the transcriptome fasta files created during the RNA-Seq part of the pipeline.
+* `make create_reference_intergenic` create one txt file per species containing all reference intergenic regions.
+* `make copy_intergenic_files`copy previously generated files to the ftp
 
-* `make create_reference_intergenic` will only create one txt file per species containing all reference intergenic regions.
-
-* `make create_fasta_intergenic` will only copy both reference and fasta files to the FTP.
